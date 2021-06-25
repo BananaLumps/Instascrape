@@ -1,0 +1,17 @@
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\Insta scrape.exe.config
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\Insta scrape.exe.manifest
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\Insta scrape.application
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\Insta scrape.exe
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\Insta scrape.pdb
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\WebDriver.dll
+D:\source\repos\Insta scrape\Insta scrape\bin\Release\WebDriver.xml
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.csproj.AssemblyReference.cache
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta_scrape.Form1.resources
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta_scrape.Properties.Resources.resources
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.csproj.GenerateResource.cache
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.csproj.CoreCompileInputs.cache
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.exe.manifest
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.application
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.csproj.CopyComplete
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.exe
+D:\source\repos\Insta scrape\Insta scrape\obj\Release\Insta scrape.pdb
