@@ -8,10 +8,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Firefox;
 using System.Threading;
 using System.Timers;
+using InstagramApiSharp.API;
+using InstagramApiSharp.Classes;
+using InstagramApiSharp.API.Builder;
+using Microsoft.VisualBasic;
 
 namespace Insta_scrape
 {
@@ -19,8 +21,8 @@ namespace Insta_scrape
     {
         private List<UserInfo> users = new List<UserInfo>();
         private UserInfo userInfo = new UserInfo();
-        private IWebDriver driver;
         private string LogFilePath;
+        private IInstaApi _instaApi;
 
         public Form1()
         {
@@ -30,18 +32,14 @@ namespace Insta_scrape
             LogFileStream.Close();
         }
 
-        private void button_start_Click(object sender, EventArgs e)
+        private async void button_start_Click(object sender, EventArgs e)
         {
+            await InstaLogin();
             userInfo.Username = textBox_Username.Text;
-            FirefoxOptions options = new FirefoxOptions();
-            options.AddArguments("--headless");
-            var driverService = FirefoxDriverService.CreateDefaultService();
-            driverService.HideCommandPromptWindow = true;
-            driver = new FirefoxDriver(driverService, options);
-            driver.Url = @"https://www.picuki.com/profile/" + userInfo.Username;
-            userInfo.PostCount = driver.FindElement(By.ClassName("total_posts")).Text;
-            userInfo.FollowerCount = driver.FindElement(By.ClassName("followed_by")).Text;
-            userInfo.FollowingCount = driver.FindElement(By.ClassName("follows")).Text;
+            var info = await _instaApi.UserProcessor.GetUserInfoByUsernameAsync(userInfo.Username);
+            userInfo.PostCount = info.Value.MediaCount.ToString();
+            userInfo.FollowerCount = info.Value.FollowerCount.ToString();
+            userInfo.FollowingCount = info.Value.FollowingCount.ToString();
             users.Add(userInfo);
             LogTimer();
         }
@@ -62,12 +60,12 @@ namespace Insta_scrape
             }
         }
 
-        private void CheckForChanges(object sender, ElapsedEventArgs e)
+        private async void CheckForChanges(object sender, ElapsedEventArgs e)
         {
             foreach (UserInfo user in users)
             {
-                driver.Url = @"https://www.picuki.com/profile/" + userInfo.Username;
-                string newpc = driver.FindElement(By.ClassName("total_posts")).Text, newfc = driver.FindElement(By.ClassName("followed_by")).Text, newf = driver.FindElement(By.ClassName("follows")).Text;
+                var info = await _instaApi.UserProcessor.GetUserInfoByUsernameAsync(user.Username);
+                string newpc = info.Value.MediaCount.ToString(), newfc = info.Value.FollowerCount.ToString(), newf = info.Value.FollowingCount.ToString();
                 if (userInfo.PostCount != newpc)
                 {
                     LogFileWrite(DateTime.Now + string.Format(" User {0} Post count changed from {1} to {2}", userInfo.Username, userInfo.PostCount, newpc));
@@ -84,28 +82,12 @@ namespace Insta_scrape
                     userInfo.PostCount = newf;
                 }
             }
-            LogTimer();
         }
 
         private void button_stop_Click(object sender, EventArgs e)
         {
-            //Currently takes 4 seconds for the exception to be handled, not sure why, minor issue for now.
-            try
-            {
-                if (!String.IsNullOrEmpty(driver.CurrentWindowHandle))
-                {
-                    driver.Quit();
-                }
-            }
-            catch { }
             this.Close();
         }
-
-        //Test button, removed for publish
-        //private void button1_Click(object sender, EventArgs e)
-        //{
-        //    users[0].PostCount = "0";
-        //}
 
         private void Form1_Resize(object sender, EventArgs e)
         {
@@ -126,16 +108,51 @@ namespace Insta_scrape
             notifyIcon.Visible = false;
         }
 
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private async Task InstaLogin()
         {
+            var userSession = new UserSessionData
+            {
+                UserName = Interaction.InputBox("Please enter your Instagram Username", "Username", ""),
+                Password = Interaction.InputBox("Please enter your Instagram Password", "Password", "")
+            };
+            _instaApi = InstaApiBuilder.CreateBuilder()
+                .SetUser(userSession)
+                .Build();
+            const string stateFile = "state.bin";
             try
             {
-                if (!String.IsNullOrEmpty(driver.CurrentWindowHandle))
+                // load session file if exists
+                if (File.Exists(stateFile))
                 {
-                    driver.Quit();
+                    using (var fs = File.OpenRead(stateFile))
+                    {
+                        _instaApi.LoadStateDataFromStream(fs);
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            if (!_instaApi.IsUserAuthenticated)
+            {
+                // login
+                var logInResult = await _instaApi.LoginAsync();
+                if (!logInResult.Succeeded)
+                {
+                    MessageBox.Show("Login Failed - Error:" + logInResult.Info.Message);
+                    return;
+                }
+            }
+            // save session in file
+            var state = _instaApi.GetStateDataAsStream();
+
+            using (var fileStream = File.Create(stateFile))
+            {
+                state.Seek(0, SeekOrigin.Begin);
+                state.CopyTo(fileStream);
+            }
         }
     }
 }
